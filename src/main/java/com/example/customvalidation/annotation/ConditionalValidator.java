@@ -6,70 +6,56 @@ import org.apache.commons.beanutils.BeanUtils;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.Optional;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
+@SuppressWarnings({"unused", "FieldCanBeLocal"})
 @Slf4j
 public class ConditionalValidator implements ConstraintValidator<Conditional, Object> {
 
     private String selected;
-    private String[] required;
+    private String[] requires;
     private String message;
-    private String[] values;
+    //private String[] values;
     private boolean isNullOrEmpty;
 
     @Override
     public void initialize(Conditional conditional) {
         selected = conditional.selected();
-        required = conditional.required();
+        requires = conditional.requires();
         message = conditional.message();
-        values = conditional.values();
+        //values = conditional.values();
         isNullOrEmpty = conditional.isNullOrEmpty();
     }
 
     @Override
     public boolean isValid(Object object, ConstraintValidatorContext context) {
-        boolean valid = true;
+        boolean valid;
         try {
             Object checkedValue = BeanUtils.getProperty(object, selected);
+            valid = checkedValue != null && !isEmpty(checkedValue);
 
             if (!isNullOrEmpty) {
-                for (String propName : required) {
-                    Object requiredValue = BeanUtils.getProperty(object, propName);
-                    Object o = Optional.ofNullable(requiredValue).orElse(0);
-                    valid = requiredValue != null && !isEmpty(requiredValue);
-                    System.out.println("value: " + "" + requiredValue);
-
-                    if (!valid) {
-                        context.disableDefaultConstraintViolation();
-                        context.buildConstraintViolationWithTemplate(message)
-                                .addPropertyNode(propName)
-                                .addConstraintViolation();
+                if (requires.length > 0) {
+                    for (String propName : requires) {
+                        Object requiredValue = BeanUtils.getProperty(object, propName);
+                        valid = requiredValue != null && !isEmpty(requiredValue);
+                        if (!valid) {
+                            log.warn("Field '{}' selected, but value of field '{}' is not present. Field '{}' is required.",
+                                    selected, propName, propName);
+                            setContext(context, propName);
+                        }
                     }
                 }
-                return valid;
-            }
-
-
-            if (checkedValue == null || checkedValue == "") {
-                checkedValue = "";
-            }
-
-            if (Arrays.asList(values).contains(checkedValue)) {
-                for (String propName : required) {
-                    Object requiredValue = BeanUtils.getProperty(object, propName);
-                    valid = requiredValue != null && !isEmpty(requiredValue);
-                    System.out.println("value: " + "" + requiredValue);
-                    if (!valid) {
-                        context.disableDefaultConstraintViolation();
-                        context.buildConstraintViolationWithTemplate(message)
-                                .addPropertyNode(propName)
-                                .addConstraintViolation();
-                    }
+                if (!valid) {
+                    log.error("Field '{}' is invalid", selected);
+                    setContext(context, selected);
                 }
+            } else {
+                return true;
             }
+
+            return valid;
         } catch (IllegalAccessException e) {
             log.error("Accessor method is not available for class : {}, exception : {}", object.getClass().getName(), e);
             e.printStackTrace();
@@ -83,6 +69,12 @@ public class ConditionalValidator implements ConstraintValidator<Conditional, Ob
             e.printStackTrace();
             return false;
         }
-        return valid;
+    }
+
+    private void setContext(ConstraintValidatorContext context, String field) {
+        context.disableDefaultConstraintViolation();
+        context.buildConstraintViolationWithTemplate(message)
+                .addPropertyNode(field)
+                .addConstraintViolation();
     }
 }

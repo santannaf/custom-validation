@@ -13,8 +13,8 @@ public @interface Conditional {
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 
-    boolean isNullOrEmpty() default true;
     String selected();
-    String[] required() default {};
-    String[] values() default {};
+    boolean isNullOrEmpty() default true;
+    String[] requires() default {};
+    //String[] values() default {};
 }
