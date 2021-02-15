@@ -14,13 +14,15 @@ import java.util.UUID;
 @Data
 @Builder
 @Conditionals({
-        @Conditional(selected = "email", isNullOrEmpty = false, requires = {"lastname", "name", "age"}),
+        @Conditional(selected = "email", isNullOrEmpty = false, requires = {"lastname", "name", "age"})
 })
 public class Customer {
     private String name;
     private Integer age;
     private String lastname;
     private String email;
+    private String codePostal;
     @Builder.Default
     private UUID id = UUID.randomUUID();
+    private Address address;
 }
