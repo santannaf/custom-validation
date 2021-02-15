@@ -7,6 +7,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
@@ -37,6 +38,7 @@ public class ConditionalValidator implements ConstraintValidator<Conditional, Ob
             if (!isNullOrEmpty) {
                 for (String propName : required) {
                     Object requiredValue = BeanUtils.getProperty(object, propName);
+                    Object o = Optional.ofNullable(requiredValue).orElse(0);
                     valid = requiredValue != null && !isEmpty(requiredValue);
                     System.out.println("value: " + "" + requiredValue);
 

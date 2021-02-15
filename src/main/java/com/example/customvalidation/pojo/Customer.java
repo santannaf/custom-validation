@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.Min;
 import java.util.UUID;
@@ -17,7 +16,6 @@ import java.util.UUID;
 @Conditional(selected = "name", isNullOrEmpty = false, required = {"age"})
 public class Customer {
     private String name;
-    @Min(18)
     private int age;
     @Builder.Default
     private UUID id = UUID.randomUUID();
